@@ -1,0 +1,173 @@
+/* Estilos CSS para o Gêmeo Digital SENAI */
+
+:root {
+    --cor-senai: #0076a3; /* Azul SENAI */
+    --cor-fundo: #f4f7f9;
+    --cor-card: #ffffff;
+    --cor-texto: #333;
+    --cor-sucesso: #28a745;
+    --cor-alerta: #ffc107;
+    --cor-risco: #dc3545;
+    --cor-base-predio: #ddd;
+    --cor-concluido: #1e88e5; /* Um azul vibrante para conclusão */
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Estrutura Principal de Layout */
+#container-principal {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+/* Painéis Laterais */
+.painel-lateral {
+    width: 350px;
+    background-color: var(--cor-card);
+    padding: 20px;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#painel-controle {
+    width: 250px;
+    border-right: 5px solid var(--cor-senai);
+}
+
+/* Visualizador 3D */
+#visualizador-3d {
+    flex-grow: 1;
+    background-color: #c9d7e5;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#visualizador-3d h2 {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    color: var(--cor-senai);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+/* Mockup do Modelo 3D (Substituirá o Canvas) */
+#modelo-container {
+    width: 90%;
+    height: 80%;
+    border: 2px solid #555;
+    background: linear-gradient(to top right, #eef, #c9d7e5);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* Alinha o prédio na base */
+}
+
+.predio-simulado {
+    width: 200px; /* Reduzido para caber mais fases */
+    height: 500px;
+    background-color: var(--cor-base-predio);
+    border: 1px solid #333;
+    position: relative;
+    display: flex;
+    flex-direction: column-reverse; /* Fases de baixo para cima */
+    box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.andar {
+    height: calc(100% / 8); /* 8 fases */
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #555;
+    background-color: var(--cor-base-predio);
+}
+
+#fase-atual {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: var(--cor-senai);
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes pulse {
+    from { box-shadow: 0 0 5px var(--cor-senai); }
+    to { box-shadow: 0 0 15px var(--cor-senai); }
+}
+
+/* Controles */
+.botao-acao {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+}
+.botao-acao:active { transform: scale(0.98); }
+.botao-primario { background-color: var(--cor-senai); color: white; }
+.botao-primario:hover { background-color: #005a80; }
+.controle-grupo { margin-bottom: 25px; padding: 10px; border-bottom: 1px solid #eee; }
+#painel-controle h3 { color: var(--cor-senai); border-bottom: 2px solid var(--cor-senai); padding-bottom: 5px; margin-top: 0; }
+
+/* KPIs */
+#painel-kpi { border-left: 5px solid var(--cor-senai); }
+#painel-kpi h3 { color: var(--cor-senai); border-bottom: 2px solid var(--cor-senai); padding-bottom: 5px; margin-top: 0; }
+
+.kpi-card {
+    background-color: var(--cor-fundo);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-card p { margin: 0; font-size: 0.9em; color: #666; }
+.kpi-valor { font-size: 1.8em; font-weight: bold; color: var(--cor-senai); margin-top: 5px; }
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.status-sucesso { background-color: var(--cor-sucesso); color: white; }
+.status-alerta { background-color: var(--cor-alerta); color: #333; }
+.status-risco { background-color: var(--cor-risco); color: white; }
+
+#curva-s-container {
+    flex-grow: 1;
+    min-height: 250px;
+    position: relative;
+    padding-top: 15px;
+}

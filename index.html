@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gêmeo Digital de Construção Civil - SENAI/ASSEOP</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="container-principal">
+
+        <div id="painel-controle" class="painel-lateral">
+            <h3>⚙️ Controle da Simulação</h3>
+            
+            <div class="controle-grupo">
+                <h4>Linha do Tempo</h4>
+                <button class="botao-acao botao-primario" id="btn-simular" onclick="alternarSimulacao()">▶️ Iniciar Simulação (1X)</button>
+                
+                <label for="velocidade" style="display: block; margin-top: 10px;">Velocidade:</label>
+                <input type="range" id="velocidade" min="1" max="5" step="1" value="1" oninput="mudarVelocidade(this.value)" style="width: 100%;">
+                <p id="velocidade-atual" style="text-align: center; font-weight: bold;">Velocidade: 1x</p>
+            </div>
+
+            <div class="controle-grupo">
+                <h4>Recursos IA/Otimização</h4>
+                <button class="botao-acao" onclick="ativarAnalisePreditiva()">🧠 Análise Preditiva (Risco)</button>
+                <button class="botao-acao" onclick="visualizarLogistica()">🚚 Logística JIT/Fornecedores</button>
+            </div>
+
+            <div class="controle-grupo">
+                <h4>Visualização 3D (Simulado)</h4>
+                <button class="botao-acao" onclick="modoRaioX()">🔭 Modo Raio-X (Instalações)</button>
+                <button class="botao-acao" onclick="mostrarConflitos()">⚠️ Conflitos BIM (Tubulação)</button>
+            </div>
+            
+            <p style="text-align: center; font-size: 0.8em; color: #999; margin-top: auto;">Desenvolvido pelo SENAI para a ASSEOP</p>
+        </div>
+
+        <div id="visualizador-3d">
+            <h2>Gêmeo Digital - Prédio 4 Andares | ASSEOP</h2>
+            <div id="modelo-container">
+                <div class="predio-simulado">
+                    <div class="andar" id="andar-0">I. Fundação</div>
+                    <div class="andar" id="andar-1">II. Estrutura 1º</div>
+                    <div class="andar" id="andar-2">II. Estrutura 2º</div>
+                    <div class="andar" id="andar-3">II. Estrutura 3º</div>
+                    <div class="andar" id="andar-4">II. Estrutura 4º</div>
+                    <div class="andar" id="andar-5">III. Vedações</div>
+                    <div class="andar" id="andar-6">IV. Instalações</div>
+                    <div class="andar" id="andar-7">V. Acabamentos</div>
+                </div>
+            </div>
+            <div id="fase-atual">Fase: Aguardando Início</div>
+        </div>
+
+        <div id="painel-kpi" class="painel-lateral">
+            <h3>📊 Painel de Performance (KPIs)</h3>
+            
+            <div class="kpi-card">
+                <p>Andamento Físico Geral</p>
+                <div class="kpi-valor" id="kpi-andamento">0.0%</div>
+                <span id="status-andamento" class="status-badge status-sucesso">Na Meta</span>
+            </div>
+
+            <div class="kpi-card">
+                <p>Variação de Custo (Previsto vs Realizado)</p>
+                <div class="kpi-valor" id="kpi-custo">R$ 0,00 (+0.0%)</div>
+                <span id="status-custo" class="status-badge status-sucesso">Orçamento OK</span>
+            </div>
+
+            <div class="kpi-card">
+                <p>Previsão IA (Risco)</p>
+                <div class="kpi-valor" id="kpi-previsao">Risco Baixo</div>
+                <span id="status-previsao" class="status-badge status-sucesso">Conclusão no Prazo</span>
+            </div>
+            
+            <div class="kpi-card">
+                <p>Utilização de Equipamentos</p>
+                <div class="kpi-valor" id="kpi-equipamento">0%</div>
+                <span id="status-equipamento" class="status-badge status-sucesso">Otimizada</span>
+            </div>
+
+            <div class="kpi-card" id="curva-s-container">
+                <p style="font-weight: bold; color: var(--cor-senai);">Curva S - Desembolso Acumulado</p>
+                <canvas id="curva-s-chart"></canvas>
+            </div>
+        </div>
+
+    </div>
+    
+    <script src="simulacao.js"></script>
+</body>
+</html>

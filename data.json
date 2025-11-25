@@ -1,0 +1,71 @@
+{
+    "projeto": "Prédio Residencial 4x4",
+    "custo_total_previsto": 4500000,
+    "prazo_previsto_dias": 365,
+    "fases": [
+        {
+            "id": 1,
+            "nome": "I. Fundação e Preparação",
+            "peso_percentual": 5,
+            "custo_previsto": 225000,
+            "recursos_chave": ["Sondagem", "Escavação", "Cimento"],
+            "fornecedor_chave": "Engesol"
+        },
+        {
+            "id": 2,
+            "nome": "II. Estrutura (1º e 2º Andares)",
+            "peso_percentual": 15,
+            "custo_previsto": 675000,
+            "recursos_chave": ["Concreto Usinado", "Aço CA-50"],
+            "fornecedor_chave": "Concremax"
+        },
+        {
+            "id": 3,
+            "nome": "II. Estrutura (3º e 4º Andares)",
+            "peso_percentual": 15,
+            "custo_previsto": 675000,
+            "recursos_chave": ["Concreto Usinado", "Formas de Madeira"],
+            "fornecedor_chave": "Concremax"
+        },
+        {
+            "id": 4,
+            "nome": "III. Vedações e Alvenaria (Internas/Externas)",
+            "peso_percentual": 15,
+            "custo_previsto": 675000,
+            "recursos_chave": ["Blocos Cerâmicos", "Argamassa"],
+            "fornecedor_chave": "Cerâmica Norte"
+        },
+        {
+            "id": 5,
+            "nome": "IV. Instalações Hidráulicas e Elétricas",
+            "peso_percentual": 20,
+            "custo_previsto": 900000,
+            "recursos_chave": ["Tubos PVC", "Cabos Elétricos"],
+            "fornecedor_chave": "Materiais BH"
+        },
+        {
+            "id": 6,
+            "nome": "V. Revestimentos e Acabamentos (Piso e Parede)",
+            "peso_percentual": 15,
+            "custo_previsto": 675000,
+            "recursos_chave": ["Porcelanato", "Argamassa Colante"],
+            "fornecedor_chave": "Decora Pisos"
+        },
+        {
+            "id": 7,
+            "nome": "VI. Esquadrias, Pintura e Detalhes",
+            "peso_percentual": 10,
+            "custo_previsto": 450000,
+            "recursos_chave": ["Janelas Alumínio", "Tinta Acrílica"],
+            "fornecedor_chave": "Vidraçaria Sul"
+        },
+        {
+            "id": 8,
+            "nome": "VII. Limpeza, Vistoria e Entrega (Habite-se)",
+            "peso_percentual": 5,
+            "custo_previsto": 225000,
+            "recursos_chave": ["Mão de Obra Especializada", "Taxas"],
+            "fornecedor_chave": "Prefeitura"
+        }
+    ]
+}
