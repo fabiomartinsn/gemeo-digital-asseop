@@ -9,7 +9,13 @@
             "peso_percentual": 5,
             "custo_previsto": 225000,
             "recursos_chave": ["Sondagem", "Escavação", "Cimento"],
-            "fornecedor_chave": "Engesol"
+            "fornecedor_chave": "Engesol",
+            "atividades_detalhadas": [
+                "Locação e Demarcação do Terreno",
+                "Sondagem e Laudo Geotécnico",
+                "Escavação e Movimento de Terra",
+                "Instalação de Estacas ou Sapatas (Concreto)"
+            ]
         },
         {
             "id": 2,
@@ -17,7 +23,13 @@
             "peso_percentual": 15,
             "custo_previsto": 675000,
             "recursos_chave": ["Concreto Usinado", "Aço CA-50"],
-            "fornecedor_chave": "Concremax"
+            "fornecedor_chave": "Concremax",
+            "atividades_detalhadas": [
+                "Montagem de Formas e Armaduras do 1º Andar",
+                "Lançamento de Concreto (Pilares/Vigas/Lajes)",
+                "Desforma e Cura",
+                "Montagem da Estrutura do 2º Andar"
+            ]
         },
         {
             "id": 3,
@@ -25,7 +37,13 @@
             "peso_percentual": 15,
             "custo_previsto": 675000,
             "recursos_chave": ["Concreto Usinado", "Formas de Madeira"],
-            "fornecedor_chave": "Concremax"
+            "fornecedor_chave": "Concremax",
+            "atividades_detalhadas": [
+                "Montagem de Formas e Armaduras do 3º Andar",
+                "Lançamento de Concreto (Pilares/Vigas/Lajes)",
+                "Desforma e Cura",
+                "Montagem da Estrutura do 4º Andar (Cobertura)"
+            ]
         },
         {
             "id": 4,
@@ -33,7 +51,13 @@
             "peso_percentual": 15,
             "custo_previsto": 675000,
             "recursos_chave": ["Blocos Cerâmicos", "Argamassa"],
-            "fornecedor_chave": "Cerâmica Norte"
+            "fornecedor_chave": "Cerâmica Norte",
+            "atividades_detalhadas": [
+                "Execução de Alvenaria Externa",
+                "Execução de Alvenaria Interna (Paredes Divisórias)",
+                "Instalação de Contravergas e Vergas",
+                "Chapisco e Emboço"
+            ]
         },
         {
             "id": 5,
@@ -41,7 +65,13 @@
             "peso_percentual": 20,
             "custo_previsto": 900000,
             "recursos_chave": ["Tubos PVC", "Cabos Elétricos"],
-            "fornecedor_chave": "Materiais BH"
+            "fornecedor_chave": "Materiais BH",
+            "atividades_detalhadas": [
+                "Instalação de Caixas e Eletrodutos",
+                "Montagem da Rede Hidráulica (Água e Esgoto)",
+                "Passagem de Fiação Elétrica",
+                "Instalação de Pontos de Gás e Climatização"
+            ]
         },
         {
             "id": 6,
@@ -49,7 +79,13 @@
             "peso_percentual": 15,
             "custo_previsto": 675000,
             "recursos_chave": ["Porcelanato", "Argamassa Colante"],
-            "fornecedor_chave": "Decora Pisos"
+            "fornecedor_chave": "Decora Pisos",
+            "atividades_detalhadas": [
+                "Assentamento de Pisos e Azulejos",
+                "Instalação de Forro de Gesso",
+                "Impermeabilização de Áreas Molhadas",
+                "Reboco Fino e Preparação para Pintura"
+            ]
         },
         {
             "id": 7,
@@ -57,7 +93,13 @@
             "peso_percentual": 10,
             "custo_previsto": 450000,
             "recursos_chave": ["Janelas Alumínio", "Tinta Acrílica"],
-            "fornecedor_chave": "Vidraçaria Sul"
+            "fornecedor_chave": "Vidraçaria Sul",
+            "atividades_detalhadas": [
+                "Instalação de Caixilhos e Esquadrias",
+                "Pintura Interna e Externa",
+                "Instalação de Portas Internas",
+                "Montagem de Guarda-Corpos e Corrimãos"
+            ]
         },
         {
             "id": 8,
@@ -65,7 +107,13 @@
             "peso_percentual": 5,
             "custo_previsto": 225000,
             "recursos_chave": ["Mão de Obra Especializada", "Taxas"],
-            "fornecedor_chave": "Prefeitura"
+            "fornecedor_chave": "Prefeitura",
+            "atividades_detalhadas": [
+                "Limpeza Final e Remoção de Entulho",
+                "Vistoria e Reparos Finais",
+                "Obtenção do Habite-se",
+                "Entrega das Chaves aos Proprietários"
+            ]
         }
     ]
 }

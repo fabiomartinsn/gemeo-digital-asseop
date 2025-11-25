@@ -10,7 +10,7 @@ let custoAcumulado = 0; // R$
 let faseAtualIndex = 0; // Índice do array de fases (começa em 0)
 let progressoFase = 0; // % dentro da fase
 let simulacaoInterval;
-let velocidadeSimulacao = 1;
+let velocidadeSimulacao = 1; // 1x, 2x, 3x, etc.
 
 // --- Configuração do Gráfico Curva S ---
 let curvaSChart;
@@ -22,27 +22,38 @@ function formatarValor(valor) {
 
 function varColor(name) {
     const root = document.documentElement;
-    // Pega as variáveis definidas no CSS
     return getComputedStyle(root).getPropertyValue(`--cor-${name}`).trim();
 }
+
+// Mapeamento de valores do slider (1-7) para a velocidade de execução (incluindo 0.25x e 0.5x)
+const mapeamentoVelocidade = {
+    '1': 0.25, // Muito Lento
+    '2': 0.5,  // Lento
+    '3': 1,    // Normal (1x)
+    '4': 2,    // Rápido (2x)
+    '5': 3,    // 3x
+    '6': 4,    // 4x
+    '7': 5     // Muito Rápido (5x)
+};
 
 // === LÓGICA DO PROJETO ===
 
 // 1. Carrega os dados e inicializa
 async function inicializarProjeto() {
     try {
-        // Simula o carregamento do data.json
         const response = await fetch('data.json');
         const data = await response.json();
         
         projetoData = data.fases;
         CUSTO_TOTAL_PREVISTO = data.custo_total_previsto;
         
-        // Inicializa o Chart.js
-        inicializarGrafico();
+        // Define o estado inicial da velocidade de 1x
+        document.getElementById('velocidade-atual').textContent = 'Velocidade: 1x';
         
-        // Define o estado inicial dos KPIs
+        inicializarGrafico();
         atualizarKPIs();
+        // Garante que o painel de detalhes seja preenchido no início
+        atualizarDetalhesAtividade(projetoData[faseAtualIndex]); 
         document.getElementById('fase-atual').textContent = `Fase: ${projetoData[faseAtualIndex].nome}`;
 
     } catch (error) {
@@ -56,10 +67,8 @@ function inicializarGrafico() {
     const ctx = document.getElementById('curva-s-chart').getContext('2d');
     const labels = ['Início'];
     
-    // Cria labels para o gráfico baseado nas fases
     projetoData.forEach((item, index) => labels.push(`Fase ${item.id}`));
 
-    // Calcula a Curva S Prevista (Acumulado)
     const dataPrevista = [0];
     let tempPrevisto = 0;
     projetoData.forEach(item => {
@@ -110,31 +119,27 @@ function inicializarGrafico() {
 function atualizarSimulacao() {
     const faseAtual = projetoData[faseAtualIndex];
     if (!faseAtual) {
-        // Simulação completa
         pararSimulacao();
         return;
     }
 
-    // Fatores de IA/Riscos: Simulação de produtividade e desvio de custo
-    const fatorProdutividade = (0.9 + Math.random() * 0.2) * (velocidadeSimulacao / 2); // Varia 0.9 a 1.1 base
-    const desvioCusto = 1.0 + (Math.random() - 0.5) * 0.02; // Variação de -1% a +1% no custo
+    const fatorProdutividade = (0.9 + Math.random() * 0.2);
+    const desvioCusto = 1.0 + (Math.random() - 0.5) * 0.02; 
 
-    // 1. Avanço
-    const avanco = 1.0 * fatorProdutividade; // Avança 1% por tick base (ajustado pela velocidade)
+    // O avanço é proporcional à velocidade escolhida
+    const avanco = 1.0 * fatorProdutividade * velocidadeSimulacao;
     progressoFase += avanco;
 
-    // 2. Custos
     const custoAvancado = (faseAtual.custo_previsto / 100) * avanco * desvioCusto;
     custoAcumulado += custoAvancado;
 
-    // 3. Atualização de Fases
+    // 4. Atualização de Fases
     if (progressoFase >= 100) {
         progressoFase = 100;
 
-        // Atualiza Progresso Total pelo Peso da Fase
         progressoGeral += faseAtual.peso_percentual;
         
-        // Animação de conclusão no Mockup 3D
+        // Simulação 3D: Marca a fase como concluída
         const andarElement = document.getElementById(`andar-${faseAtualIndex}`);
         if (andarElement) {
             andarElement.style.backgroundColor = varColor('concluido');
@@ -142,24 +147,28 @@ function atualizarSimulacao() {
             andarElement.textContent = `Fase ${faseAtual.id} - CONCLUÍDO`;
         }
 
-        // Avança para a próxima fase
         faseAtualIndex++;
-        progressoFase = 0; // Reinicia o progresso da nova fase
+        progressoFase = 0;
+        
+        if (faseAtualIndex < projetoData.length) {
+            // Atualiza os detalhes da atividade para a próxima fase
+            atualizarDetalhesAtividade(projetoData[faseAtualIndex]); 
+        }
     } else {
-        // Calcula Progresso Total Parcial
         const pesoFasesAnteriores = projetoData.slice(0, faseAtualIndex).reduce((acc, item) => acc + item.peso_percentual, 0);
         progressoGeral = pesoFasesAnteriores + (progressoFase / 100) * faseAtual.peso_percentual;
     }
 
-    atualizarKPIs(desvioCusto, fatorProdutividade);
+    atualizarKPIs();
 }
 
-// 4. Atualiza o Painel KPI e Gráfico
-function atualizarKPIs(desvioCusto = 1, fatorProdutividade = 1) {
+// 5. Atualiza o Painel KPI
+function atualizarKPIs() {
     
     // -- Variáveis Chave EVM (Earned Value Management) --
     const valorAgregado = (progressoGeral / PESO_TOTAL) * CUSTO_TOTAL_PREVISTO; // EV
-    const valorPlanejadoAcumulado = projetoData.slice(0, faseAtualIndex + 1).reduce((acc, item) => acc + item.custo_previsto, 0) * (progressoFase / 100); 
+    const valorPlanejadoFase = projetoData[faseAtualIndex] ? (projetoData[faseAtualIndex].custo_previsto / 100) * progressoFase : 0;
+    const valorPlanejadoAcumulado = projetoData.slice(0, faseAtualIndex).reduce((acc, item) => acc + item.custo_previsto, 0) + valorPlanejadoFase; // PV
 
     const variacaoCusto = custoAcumulado - valorAgregado; // CV = EV - AC
     const percentualVariacao = (variacaoCusto / valorAgregado) * 100 || 0;
@@ -192,13 +201,13 @@ function atualizarKPIs(desvioCusto = 1, fatorProdutividade = 1) {
     // -- KPI 3: Previsão IA (Risco) --
     const statusPrevisao = document.getElementById('status-previsao');
     const kpiPrevisao = document.getElementById('kpi-previsao');
-    const SPI = valorAgregado / valorPlanejadoAcumulado; // SPI = EV / PV
+    const SPI = valorAgregado / valorPlanejadoAcumulado;
 
-    if (SPI < 0.9) { // Queda de desempenho no cronograma
+    if (SPI < 0.9 && progressoGeral < 95) { 
         kpiPrevisao.textContent = 'RISCO ALTO';
-        statusPrevisao.textContent = `Atraso Estimado (+${(1/SPI * 365).toFixed(0)} dias)`;
+        statusPrevisao.textContent = `Atraso Estimado (+${(365 * (1/SPI - 1)).toFixed(0)} dias)`;
         statusPrevisao.className = 'status-badge status-risco';
-    } else if (SPI < 0.95) {
+    } else if (SPI < 0.95 && progressoGeral < 95) {
         kpiPrevisao.textContent = 'Risco Médio';
         statusPrevisao.textContent = 'Atenção ao Cronograma';
         statusPrevisao.className = 'status-badge status-alerta';
@@ -219,20 +228,34 @@ function atualizarKPIs(desvioCusto = 1, fatorProdutividade = 1) {
         statusEquipamento.textContent = 'Otimizada';
         statusEquipamento.className = 'status-badge status-sucesso';
     }
-
-    // -- Curva S --
+    
     atualizarCurvaS(custoAcumulado);
+}
+
+// Função para popular a lista de atividades detalhadas (NOVA LÓGICA)
+function atualizarDetalhesAtividade(fase) {
+    const listaUl = document.getElementById('lista-atividades-fase');
+    listaUl.innerHTML = ''; // Limpa a lista anterior
+
+    document.getElementById('detalhe-atividade').textContent = fase.nome;
+    
+    // Cria um item de lista (<li>) para cada atividade detalhada
+    fase.atividades_detalhadas.forEach(atividade => {
+        const li = document.createElement('li');
+        li.textContent = atividade;
+        listaUl.appendChild(li);
+    });
+
+    document.getElementById('detalhe-recurso').textContent = fase.recursos_chave.join(', ');
+    document.getElementById('detalhe-fornecedor').textContent = fase.fornecedor_chave;
 }
 
 function atualizarCurvaS(custoRealizado) {
     const dataRealizado = curvaSChart.data.datasets[1].data;
     
-    // Se a fase mudou, adiciona um novo ponto no gráfico
     if (faseAtualIndex + 1 > dataRealizado.length) {
-         // O novo ponto de custo realizado é o custo atual acumulado
         dataRealizado.push(custoRealizado); 
     } else if (faseAtualIndex < projetoData.length) {
-        // Atualiza o último ponto (a fase atual)
         dataRealizado[faseAtualIndex] = custoRealizado;
     }
     
@@ -244,15 +267,18 @@ function iniciarSimulacao() {
     if (simulacaoInterval) {
         clearInterval(simulacaoInterval);
     }
-    document.getElementById('btn-simular').textContent = `⏸️ Pausar Simulação (${velocidadeSimulacao}X)`;
+    const velocidadeLabel = document.getElementById('velocidade-atual').textContent.replace('Velocidade: ', '');
+    document.getElementById('btn-simular').textContent = `⏸️ Pausar Simulação (${velocidadeLabel})`;
     document.getElementById('btn-simular').classList.remove('botao-primario');
-    simulacaoInterval = setInterval(atualizarSimulacao, 100); // Roda mais rápido para simular fluidez
+    
+    simulacaoInterval = setInterval(atualizarSimulacao, 100); 
 }
 
 function pararSimulacao() {
     clearInterval(simulacaoInterval);
     simulacaoInterval = null;
-    document.getElementById('btn-simular').textContent = `▶️ Continuar Simulação (${velocidadeSimulacao}X)`;
+    const velocidadeLabel = document.getElementById('velocidade-atual').textContent.replace('Velocidade: ', '');
+    document.getElementById('btn-simular').textContent = `▶️ Continuar Simulação (${velocidadeLabel})`;
     document.getElementById('btn-simular').classList.add('botao-primario');
 }
 
@@ -264,11 +290,12 @@ function alternarSimulacao() {
     }
 }
 
-function mudarVelocidade(novaVelocidade) {
-    velocidadeSimulacao = parseInt(novaVelocidade);
+function mudarVelocidade(sliderValue) {
+    // Usa o mapeamento para obter o valor real da velocidade (ex: slider 1 = 0.25x)
+    velocidadeSimulacao = mapeamentoVelocidade[sliderValue];
     document.getElementById('velocidade-atual').textContent = `Velocidade: ${velocidadeSimulacao}x`;
     if (simulacaoInterval) {
-        iniciarSimulacao(); // Reinicia o intervalo com a nova velocidade
+        iniciarSimulacao();
     } else {
          document.getElementById('btn-simular').textContent = `▶️ Iniciar Simulação (${velocidadeSimulacao}X)`;
     }
@@ -280,11 +307,11 @@ function ativarAnalisePreditiva() {
 }
 
 function visualizarLogistica() {
-    alert('🚚 Logística JIT/Fornecedores: Os dados do JSON mostram que o fornecedor chave da próxima fase é "Cerâmica Norte". O sistema alerta se o prazo de entrega afetar o cronograma principal.');
+    alert('🚚 Logística JIT/Fornecedores: O painel de Detalhes da Atividade mostra o recurso-chave e o fornecedor da fase atual, simulando o monitoramento de rastreamento de entrega.');
 }
 
 function modoRaioX() {
-    alert('🔭 Modo Raio-X Ativado: Demonstração de integração BIM! (No 3D real, as paredes seriam transparentes para visualizar tubos e fiações).');
+    alert('🔭 Modo Raio-X Ativado: Demonstração de integração BIM! (No modelo 3D real, as paredes seriam transparentes para visualizar tubos e fiações).');
 }
 
 function mostrarConflitos() {
