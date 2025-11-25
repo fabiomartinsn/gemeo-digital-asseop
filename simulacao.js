@@ -43,6 +43,20 @@ const mapeamentoVelocidade = {
     '7': 5     // Muito Rápido (5x)
 };
 
+// NOVO: Função auxiliar para formatar a variação de custo
+function formatarVariacaoCusto(variacao) {
+    const sinal = variacao >= 0 ? '+' : '';
+    // Define o limite de desvio para mudar a cor (R$ 1.000,00)
+    const isOverBudget = variacao > 1000; 
+    const corTexto = isOverBudget ? 'var(--cor-risco)' : (variacao < -1000 ? 'var(--cor-alerta)' : 'var(--cor-sucesso)');
+    
+    return `
+        <span class="sub-atividade-custo" style="float:right; font-weight: bold; font-size: 1.0em; color: ${corTexto}">
+            ${sinal}${formatarValor(variacao)}
+        </span>
+    `;
+}
+
 // === LÓGICA DO PROJETO ===
 
 // 1. Carrega os dados e inicializa
@@ -60,7 +74,6 @@ async function inicializarProjeto() {
         inicializarGrafico();
         atualizarKPIs();
         
-        // Verifica se há fases no projeto antes de tentar acessar o índice 0
         if (projetoData.length > 0) {
             atualizarDetalhesAtividade(projetoData[faseAtualIndex]); 
             document.getElementById('fase-atual').textContent = `Fase: ${projetoData[faseAtualIndex].nome}`;
@@ -205,6 +218,14 @@ function atualizarSimulacao() {
     
     // 2. TRANSIÇÃO DE SUB-ATIVIDADES
     if (progressoSubAtividade >= 100) {
+        
+        // NOVO: CALCULAR E ARMAZENAR CUSTO FINAL DA SUB-ATIVIDADE CONCLUÍDA
+        const custoPlanejadoAcumuladoFinal = custoPrevistoSubAtividadeTotal;
+        const variacaoCustoFinal = custoSubAtividadeAcumulado - custoPlanejadoAcumuladoFinal;
+        
+        // Armazenar a variação de custo final no objeto da sub-atividade concluída
+        faseAtual.atividades_detalhadas[subAtividadeAtualIndex].custo_real_final = variacaoCustoFinal;
+        
         progressoSubAtividade = 0;
         subAtividadeAtualIndex++;
         custoSubAtividadeAcumulado = 0; // Zera o acumulado para a próxima sub-atividade
@@ -232,7 +253,7 @@ function atualizarSimulacao() {
 
 
     atualizarKPIs();
-    // NOVO: Atualiza o detalhe do custo da sub-atividade atual.
+    // Atualiza o detalhe do custo da sub-atividade em execução.
     if (subAtividadeAtual) {
         atualizarDetalheCustoSubAtividade(subAtividadeAtual, custoPrevistoSubAtividadeTotal);
     }
@@ -248,15 +269,30 @@ function atualizarDetalhesAtividade(fase) {
     
     fase.atividades_detalhadas.forEach((atividade, index) => {
         const li = document.createElement('li');
-        li.textContent = atividade.nome;
         li.id = `sub-atividade-${fase.id}-${index}`;
         
         if (index < subAtividadeAtualIndex) {
+            // Atividade Concluída
             li.style.textDecoration = 'line-through';
             li.style.color = '#666';
+            
+            // NOVO: Exibe o custo final armazenado
+            if (atividade.custo_real_final !== undefined) {
+                 li.innerHTML = `${atividade.nome} ${formatarVariacaoCusto(atividade.custo_real_final)}`;
+            } else {
+                 li.textContent = atividade.nome;
+            }
+            
         } else if (index === subAtividadeAtualIndex) {
+            // Atividade em Execução (será preenchida pelo loop de atualização)
+            li.textContent = atividade.nome;
             li.style.fontWeight = 'bold';
-            li.style.color = varColor('senai'); // Cor SENAI para a atual
+            li.style.color = varColor('senai'); 
+            li.style.backgroundColor = 'var(--cor-destaque)';
+
+        } else {
+            // Atividade Futura
+             li.textContent = atividade.nome;
         }
 
         listaUl.appendChild(li);
@@ -266,7 +302,7 @@ function atualizarDetalhesAtividade(fase) {
     document.getElementById('detalhe-fornecedor').textContent = fase.fornecedor_chave;
 }
 
-// NOVO: Função para atualizar a variação de custo em tempo real por sub-atividade
+// Função para atualizar a variação de custo em tempo real por sub-atividade
 function atualizarDetalheCustoSubAtividade(subAtividade, custoPrevistoTotal) {
     if (!subAtividade || progressoSubAtividade === 0) return;
 
@@ -276,32 +312,17 @@ function atualizarDetalheCustoSubAtividade(subAtividade, custoPrevistoTotal) {
     // Custo Real - Custo Planejado (AC - PV)
     const variacaoCustoSubAtividade = custoSubAtividadeAcumulado - custoPlanejadoAcumulado;
 
-    const sinal = variacaoCustoSubAtividade >= 0 ? '+' : '';
-    const isOverBudget = variacaoCustoSubAtividade > 1000; // Define risco se desvio for maior que R$ 1000
-    const classeStatus = isOverBudget ? 'status-risco' : (variacaoCustoSubAtividade < -1000 ? 'status-alerta' : 'status-sucesso');
-    const corTexto = isOverBudget ? 'var(--cor-risco)' : (variacaoCustoSubAtividade < -1000 ? 'var(--cor-alerta)' : 'var(--cor-sucesso)');
-    
     const liEmExecucao = document.getElementById(`sub-atividade-${projetoData[faseAtualIndex].id}-${subAtividadeAtualIndex}`);
 
     if (liEmExecucao) {
-         // Mantém o destaque visual da lista para a atividade atual
-         liEmExecucao.style.backgroundColor = 'var(--cor-destaque)';
-         liEmExecucao.style.color = 'var(--cor-texto)';
-         liEmExecucao.style.fontWeight = 'bold';
-         
-         // Injetando o detalhe do custo na lista da sub-atividade
-         liEmExecucao.innerHTML = `
-            ${subAtividade.nome} 
-            <span class="sub-atividade-custo" style="float:right; font-weight: bold; font-size: 1.0em; color: ${corTexto}">
-                ${sinal}${formatarValor(variacaoCustoSubAtividade)}
-            </span>
-         `;
+         // Injetando o detalhe do custo na lista da sub-atividade (em tempo real)
+         liEmExecucao.innerHTML = `${subAtividade.nome} ${formatarVariacaoCusto(variacaoCustoSubAtividade)}`;
     }
 }
 
 function atualizarKPIs() {
-    // ... (Lógica de atualização dos KPIs, mantida) ...
-
+    
+    // -- Variáveis Chave EVM (Earned Value Management) --
     const valorAgregado = (progressoGeral / PESO_TOTAL) * CUSTO_TOTAL_PREVISTO; // EV
     const valorPlanejadoFase = projetoData[faseAtualIndex] ? (projetoData[faseAtualIndex].custo_previsto / 100) * progressoFase : 0;
     const valorPlanejadoAcumulado = projetoData.slice(0, faseAtualIndex).reduce((acc, item) => acc + item.custo_previsto, 0) + valorPlanejadoFase; // PV
