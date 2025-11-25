@@ -5,12 +5,19 @@ let projetoData;
 let CUSTO_TOTAL_PREVISTO;
 let PESO_TOTAL = 100;
 
-let progressoGeral = 0; // % total
-let custoAcumulado = 0; // R$
-let faseAtualIndex = 0; // Índice do array de fases (começa em 0)
-let progressoFase = 0; // % dentro da fase
+let progressoGeral = 0; // % total do projeto
+let custoAcumulado = 0; // R$ total acumulado (AC - Actual Cost)
+
+let faseAtualIndex = 0; // Índice da fase atual
+let progressoFase = 0; // % dentro da fase (0 a 100)
+
+// NOVAS VARIÁVEIS PARA RASTREIO DETALHADO
+let subAtividadeAtualIndex = 0; // Índice da sub-atividade dentro da fase atual
+let progressoSubAtividade = 0;  // % de progresso da sub-atividade atual (0 a 100)
+let custoSubAtividadeAcumulado = 0; // Custo REAL acumulado da sub-atividade
+
 let simulacaoInterval;
-let velocidadeSimulacao = 1; // 1x, 2x, 3x, etc.
+let velocidadeSimulacao = 1; 
 
 // --- Configuração do Gráfico Curva S ---
 let curvaSChart;
@@ -49,13 +56,15 @@ async function inicializarProjeto() {
         
         document.getElementById('velocidade-atual').textContent = 'Velocidade: 1x';
         
-        // NOVO: Renderiza os blocos da simulação 3D (para dar feedback visual)
         renderizarBlocosSimulacao();
-
         inicializarGrafico();
         atualizarKPIs();
-        atualizarDetalhesAtividade(projetoData[faseAtualIndex]); 
-        document.getElementById('fase-atual').textContent = `Fase: ${projetoData[faseAtualIndex].nome}`;
+        
+        // Verifica se há fases no projeto antes de tentar acessar o índice 0
+        if (projetoData.length > 0) {
+            atualizarDetalhesAtividade(projetoData[faseAtualIndex]); 
+            document.getElementById('fase-atual').textContent = `Fase: ${projetoData[faseAtualIndex].nome}`;
+        }
 
     } catch (error) {
         console.error("Erro ao carregar data.json:", error);
@@ -63,19 +72,17 @@ async function inicializarProjeto() {
     }
 }
 
-// FUNÇÃO NOVA: Adiciona os blocos da simulação 3D no HTML
+// FUNÇÃO: Adiciona os blocos da simulação 3D no HTML
 function renderizarBlocosSimulacao() {
     const predioSimulado = document.querySelector('.predio-simulado');
-    predioSimulado.innerHTML = ''; // Limpa qualquer conteúdo anterior
+    predioSimulado.innerHTML = ''; 
 
-    // Percorre as fases de construção (0 a 7) e cria um bloco para cada
     projetoData.forEach((fase, index) => {
         const andar = document.createElement('div');
         andar.classList.add('andar');
         andar.id = `andar-${index}`;
         andar.textContent = `${fase.nome}`;
         
-        // A fundação começa com um status visual um pouco diferente (mais escura)
         if (index === 0) {
              andar.style.backgroundColor = 'rgba(50, 50, 50, 0.8)';
         }
@@ -145,52 +152,161 @@ function atualizarSimulacao() {
         return;
     }
 
-    const fatorProdutividade = (0.9 + Math.random() * 0.2);
-    const desvioCusto = 1.0 + (Math.random() - 0.5) * 0.02; 
-
-    // O avanço é proporcional à velocidade escolhida
-    const avanco = 1.0 * fatorProdutividade * velocidadeSimulacao;
-    progressoFase += avanco;
-
-    const custoAvancado = (faseAtual.custo_previsto / 100) * avanco * desvioCusto;
-    custoAcumulado += custoAvancado;
-
-    // 4. Atualização de Fases
-    if (progressoFase >= 100) {
+    let subAtividadeAtual = faseAtual.atividades_detalhadas[subAtividadeAtualIndex];
+    
+    // TRATAMENTO DE TRANSIÇÃO DE FASE
+    if (!subAtividadeAtual) {
+        // Se todas as sub-atividades terminaram, avança para a próxima fase.
         progressoFase = 100;
-
-        progressoGeral += faseAtual.peso_percentual;
         
-        // Simulação 3D: Marca a fase como concluída
         const andarElement = document.getElementById(`andar-${faseAtualIndex}`);
         if (andarElement) {
-            andarElement.classList.add('concluido'); // Adiciona a classe de concluído do CSS
+            andarElement.classList.add('concluido');
             andarElement.textContent = `Fase ${faseAtual.id} - CONCLUÍDO`;
         }
-
+        
         faseAtualIndex++;
+        subAtividadeAtualIndex = 0;
         progressoFase = 0;
+        progressoSubAtividade = 0;
+        custoSubAtividadeAcumulado = 0;
         
         if (faseAtualIndex < projetoData.length) {
             atualizarDetalhesAtividade(projetoData[faseAtualIndex]); 
+        } else {
+             atualizarKPIs(); 
+             pararSimulacao();
+             return;
         }
-    } else {
-        const pesoFasesAnteriores = projetoData.slice(0, faseAtualIndex).reduce((acc, item) => acc + item.peso_percentual, 0);
-        progressoGeral = pesoFasesAnteriores + (progressoFase / 100) * faseAtual.peso_percentual;
+        subAtividadeAtual = projetoData[faseAtualIndex].atividades_detalhadas[subAtividadeAtualIndex]; // Pega a primeira da nova fase
     }
 
+
+    const fatorProdutividade = (0.9 + Math.random() * 0.2); 
+    const desvioCusto = 1.0 + (Math.random() - 0.5) * 0.04; 
+
+    // AVANÇO GERAL:
+    const avancoGlobal = 1.0 * fatorProdutividade * velocidadeSimulacao; 
+
+    // 1. CÁLCULO DE CUSTOS E PROGRESSO DA SUB-ATIVIDADE
+    const custoPrevistoDaFase = faseAtual.custo_previsto;
+    const pesoSubAtividade = subAtividadeAtual.peso_interno_percentual / 100;
+    const custoPrevistoSubAtividadeTotal = custoPrevistoDaFase * pesoSubAtividade;
+    
+    // Avanço real (em %) dentro da sub-atividade 
+    progressoSubAtividade += avancoGlobal; 
+    
+    // Custo a ser acumulado para este tick (aplicando o desvio de custo)
+    const custoPassoPrevisto = (custoPrevistoSubAtividadeTotal / 100) * avancoGlobal;
+    const custoPassoReal = custoPassoPrevisto * desvioCusto; 
+    
+    custoAcumulado += custoPassoReal;
+    custoSubAtividadeAcumulado += custoPassoReal;
+    
+    // 2. TRANSIÇÃO DE SUB-ATIVIDADES
+    if (progressoSubAtividade >= 100) {
+        progressoSubAtividade = 0;
+        subAtividadeAtualIndex++;
+        custoSubAtividadeAcumulado = 0; // Zera o acumulado para a próxima sub-atividade
+
+        if (subAtividadeAtualIndex < faseAtual.atividades_detalhadas.length) {
+             atualizarDetalhesAtividade(faseAtual); 
+        }
+    }
+    
+    // 3. ATUALIZAÇÃO DO PROGRESSO DE FASE E GERAL
+    const progressoDasSubAtividadesAnteriores = faseAtual.atividades_detalhadas.slice(0, subAtividadeAtualIndex)
+        .reduce((acc, item) => acc + item.peso_interno_percentual, 0);
+        
+    const progressoInternoAtual = progressoSubAtividade > 100 ? 100 : progressoSubAtividade;
+
+    progressoFase = progressoDasSubAtividadesAnteriores + (progressoInternoAtual * pesoSubAtividade);
+
+    const pesoFasesAnteriores = projetoData.slice(0, faseAtualIndex).reduce((acc, item) => acc + item.peso_percentual, 0);
+    progressoGeral = pesoFasesAnteriores + (progressoFase / 100) * faseAtual.peso_percentual;
+    
+    // Se a fase terminou, garante 100%
+    if (subAtividadeAtualIndex >= faseAtual.atividades_detalhadas.length) {
+        progressoFase = 100;
+    }
+
+
     atualizarKPIs();
+    // NOVO: Atualiza o detalhe do custo da sub-atividade atual.
+    if (subAtividadeAtual) {
+        atualizarDetalheCustoSubAtividade(subAtividadeAtual, custoPrevistoSubAtividadeTotal);
+    }
 }
 
-// 5. Atualiza o Painel KPI
-function atualizarKPIs() {
+
+// Função para popular a lista de atividades detalhadas
+function atualizarDetalhesAtividade(fase) {
+    const listaUl = document.getElementById('lista-atividades-fase');
+    listaUl.innerHTML = ''; 
+
+    document.getElementById('detalhe-atividade').textContent = fase.nome;
     
-    // -- Variáveis Chave EVM (Earned Value Management) --
+    fase.atividades_detalhadas.forEach((atividade, index) => {
+        const li = document.createElement('li');
+        li.textContent = atividade.nome;
+        li.id = `sub-atividade-${fase.id}-${index}`;
+        
+        if (index < subAtividadeAtualIndex) {
+            li.style.textDecoration = 'line-through';
+            li.style.color = '#666';
+        } else if (index === subAtividadeAtualIndex) {
+            li.style.fontWeight = 'bold';
+            li.style.color = varColor('senai'); // Cor SENAI para a atual
+        }
+
+        listaUl.appendChild(li);
+    });
+
+    document.getElementById('detalhe-recurso').textContent = fase.recursos_chave.join(', ');
+    document.getElementById('detalhe-fornecedor').textContent = fase.fornecedor_chave;
+}
+
+// NOVO: Função para atualizar a variação de custo em tempo real por sub-atividade
+function atualizarDetalheCustoSubAtividade(subAtividade, custoPrevistoTotal) {
+    if (!subAtividade || progressoSubAtividade === 0) return;
+
+    // Custo Planejado até o momento (baseado no progresso)
+    const custoPlanejadoAcumulado = custoPrevistoTotal * (progressoSubAtividade / 100);
+    
+    // Custo Real - Custo Planejado (AC - PV)
+    const variacaoCustoSubAtividade = custoSubAtividadeAcumulado - custoPlanejadoAcumulado;
+
+    const sinal = variacaoCustoSubAtividade >= 0 ? '+' : '';
+    const isOverBudget = variacaoCustoSubAtividade > 1000; // Define risco se desvio for maior que R$ 1000
+    const classeStatus = isOverBudget ? 'status-risco' : (variacaoCustoSubAtividade < -1000 ? 'status-alerta' : 'status-sucesso');
+    const corTexto = isOverBudget ? 'var(--cor-risco)' : (variacaoCustoSubAtividade < -1000 ? 'var(--cor-alerta)' : 'var(--cor-sucesso)');
+    
+    const liEmExecucao = document.getElementById(`sub-atividade-${projetoData[faseAtualIndex].id}-${subAtividadeAtualIndex}`);
+
+    if (liEmExecucao) {
+         // Mantém o destaque visual da lista para a atividade atual
+         liEmExecucao.style.backgroundColor = 'var(--cor-destaque)';
+         liEmExecucao.style.color = 'var(--cor-texto)';
+         liEmExecucao.style.fontWeight = 'bold';
+         
+         // Injetando o detalhe do custo na lista da sub-atividade
+         liEmExecucao.innerHTML = `
+            ${subAtividade.nome} 
+            <span class="sub-atividade-custo" style="float:right; font-weight: bold; font-size: 1.0em; color: ${corTexto}">
+                ${sinal}${formatarValor(variacaoCustoSubAtividade)}
+            </span>
+         `;
+    }
+}
+
+function atualizarKPIs() {
+    // ... (Lógica de atualização dos KPIs, mantida) ...
+
     const valorAgregado = (progressoGeral / PESO_TOTAL) * CUSTO_TOTAL_PREVISTO; // EV
     const valorPlanejadoFase = projetoData[faseAtualIndex] ? (projetoData[faseAtualIndex].custo_previsto / 100) * progressoFase : 0;
     const valorPlanejadoAcumulado = projetoData.slice(0, faseAtualIndex).reduce((acc, item) => acc + item.custo_previsto, 0) + valorPlanejadoFase; // PV
 
-    const variacaoCusto = custoAcumulado - valorAgregado; // CV = EV - AC
+    const variacaoCusto = custoAcumulado - valorAgregado;
     const percentualVariacao = (variacaoCusto / valorAgregado) * 100 || 0;
     
     // -- KPI 1: Andamento Físico --
@@ -202,16 +318,16 @@ function atualizarKPIs() {
         document.getElementById('fase-atual').textContent = `Projeto CONCLUÍDO!`;
     }
 
-    // -- KPI 2: Variação de Custo --
-    const sinal = percentualVariacao > 0 ? '+' : '';
+    // -- KPI 2: Variação de Custo (PROJETO TOTAL) --
+    const sinal = percentualVariacao >= 0 ? '+' : '';
     document.getElementById('kpi-custo').textContent = `${formatarValor(custoAcumulado)} (${sinal}${percentualVariacao.toFixed(1)}%)`;
     
     const custoStatus = document.getElementById('status-custo');
-    if (percentualVariacao < -5) {
+    if (percentualVariacao > 5) { // Maior que 5% acima do orçado
         custoStatus.textContent = 'Alto Desvio Negativo';
         custoStatus.className = 'status-badge status-risco';
-    } else if (percentualVariacao < 0) {
-        custoStatus.textContent = 'Baixo Desvio';
+    } else if (percentualVariacao > 0) {
+        custoStatus.textContent = 'Desvio Leve (Atenção)';
         custoStatus.className = 'status-badge status-alerta';
     } else {
         custoStatus.textContent = 'Orçamento OK';
@@ -250,23 +366,6 @@ function atualizarKPIs() {
     }
     
     atualizarCurvaS(custoAcumulado);
-}
-
-// Função para popular a lista de atividades detalhadas
-function atualizarDetalhesAtividade(fase) {
-    const listaUl = document.getElementById('lista-atividades-fase');
-    listaUl.innerHTML = ''; // Limpa a lista anterior
-
-    document.getElementById('detalhe-atividade').textContent = fase.nome;
-    
-    fase.atividades_detalhadas.forEach(atividade => {
-        const li = document.createElement('li');
-        li.textContent = atividade;
-        listaUl.appendChild(li);
-    });
-
-    document.getElementById('detalhe-recurso').textContent = fase.recursos_chave.join(', ');
-    document.getElementById('detalhe-fornecedor').textContent = fase.fornecedor_chave;
 }
 
 function atualizarCurvaS(custoRealizado) {
