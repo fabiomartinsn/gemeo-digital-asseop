@@ -1,4 +1,4 @@
-/* Estilos CSS para o Gêmeo Digital SENAI */
+/* Estilos CSS para o Gêmeo Digital SENAI (Versão Corrigida) */
 
 :root {
     --cor-senai: #0076a3;
@@ -69,17 +69,17 @@ body {
     border-radius: 5px;
 }
 
-/* Imagem de Edificação de 4 Andares (Simulação BIM) */
+/* CORREÇÃO VISUAL PROFISSIONAL: Substitui a imagem externa */
 #modelo-container {
     width: 90%;
     height: 80%;
     border: 2px solid #555;
-    background-color: #000;
-    /* Imagem de modelo 3D wireframe de um prédio */
-    background-image: url('https://i.imgur.com/gKq9b9g.png'); 
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+    background-color: #1a1a1a; /* Fundo escuro para simular ambiente de modelagem */
+    
+    /* Simulação de um grid de modelagem */
+    background-image: linear-gradient(0deg, transparent 95%, #333 95%), linear-gradient(90deg, transparent 95%, #333 95%);
+    background-size: 50px 50px;
+    
     position: relative;
     overflow: hidden;
     display: flex;
@@ -89,27 +89,39 @@ body {
 
 /* Elementos de Simulação 3D */
 .predio-simulado {
-    width: 80%;
-    height: 90%;
-    position: absolute;
-    top: 5%;
-    left: 10%;
+    width: 300px; /* Tamanho visual do prédio no centro */
+    height: 70%;
+    position: relative; /* Ajuste para centralizar visualmente */
     display: flex;
     flex-direction: column-reverse;
-    justify-content: space-evenly;
+    justify-content: flex-start;
+    border: 3px solid #777; /* Borda para destaque */
+    background-color: rgba(255, 255, 255, 0.1); /* Transparência no prédio */
 }
 
 .andar {
     width: 100%;
-    height: 10%;
+    height: calc(100% / 8); /* 8 Fases */
     display: flex;
     justify-content: center;
     align-items: center;
     transition: background-color 0.5s ease, color 0.5s ease;
     font-size: 0.8em;
     font-weight: bold;
-    color: #555;
-    background-color: transparent;
+    color: #fff; /* Texto claro no fundo escuro */
+    background-color: rgba(0, 0, 0, 0.5); /* Base escura */
+    border-top: 1px solid #777;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3) inset;
+    
+    /* Efeito de Opacidade para mostrar que está em construção */
+    opacity: 0.8; 
+}
+
+/* Destacando a Fase Concluída */
+.andar.concluido {
+    background-color: var(--cor-concluido) !important;
+    color: white !important;
+    opacity: 1 !important;
 }
 
 #fase-atual {

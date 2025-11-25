@@ -25,7 +25,7 @@ function varColor(name) {
     return getComputedStyle(root).getPropertyValue(`--cor-${name}`).trim();
 }
 
-// Mapeamento de valores do slider (1-7) para a velocidade de execução (incluindo 0.25x e 0.5x)
+// Mapeamento de valores do slider (1-7) para a velocidade de execução
 const mapeamentoVelocidade = {
     '1': 0.25, // Muito Lento
     '2': 0.5,  // Lento
@@ -47,12 +47,13 @@ async function inicializarProjeto() {
         projetoData = data.fases;
         CUSTO_TOTAL_PREVISTO = data.custo_total_previsto;
         
-        // Define o estado inicial da velocidade de 1x
         document.getElementById('velocidade-atual').textContent = 'Velocidade: 1x';
         
+        // NOVO: Renderiza os blocos da simulação 3D (para dar feedback visual)
+        renderizarBlocosSimulacao();
+
         inicializarGrafico();
         atualizarKPIs();
-        // Garante que o painel de detalhes seja preenchido no início
         atualizarDetalhesAtividade(projetoData[faseAtualIndex]); 
         document.getElementById('fase-atual').textContent = `Fase: ${projetoData[faseAtualIndex].nome}`;
 
@@ -60,6 +61,27 @@ async function inicializarProjeto() {
         console.error("Erro ao carregar data.json:", error);
         alert("Erro ao carregar dados do projeto. Verifique o arquivo data.json.");
     }
+}
+
+// FUNÇÃO NOVA: Adiciona os blocos da simulação 3D no HTML
+function renderizarBlocosSimulacao() {
+    const predioSimulado = document.querySelector('.predio-simulado');
+    predioSimulado.innerHTML = ''; // Limpa qualquer conteúdo anterior
+
+    // Percorre as fases de construção (0 a 7) e cria um bloco para cada
+    projetoData.forEach((fase, index) => {
+        const andar = document.createElement('div');
+        andar.classList.add('andar');
+        andar.id = `andar-${index}`;
+        andar.textContent = `${fase.nome}`;
+        
+        // A fundação começa com um status visual um pouco diferente (mais escura)
+        if (index === 0) {
+             andar.style.backgroundColor = 'rgba(50, 50, 50, 0.8)';
+        }
+
+        predioSimulado.appendChild(andar);
+    });
 }
 
 // 2. Configura o Gráfico Chart.js
@@ -142,8 +164,7 @@ function atualizarSimulacao() {
         // Simulação 3D: Marca a fase como concluída
         const andarElement = document.getElementById(`andar-${faseAtualIndex}`);
         if (andarElement) {
-            andarElement.style.backgroundColor = varColor('concluido');
-            andarElement.style.color = 'white';
+            andarElement.classList.add('concluido'); // Adiciona a classe de concluído do CSS
             andarElement.textContent = `Fase ${faseAtual.id} - CONCLUÍDO`;
         }
 
@@ -151,7 +172,6 @@ function atualizarSimulacao() {
         progressoFase = 0;
         
         if (faseAtualIndex < projetoData.length) {
-            // Atualiza os detalhes da atividade para a próxima fase
             atualizarDetalhesAtividade(projetoData[faseAtualIndex]); 
         }
     } else {
@@ -232,14 +252,13 @@ function atualizarKPIs() {
     atualizarCurvaS(custoAcumulado);
 }
 
-// Função para popular a lista de atividades detalhadas (NOVA LÓGICA)
+// Função para popular a lista de atividades detalhadas
 function atualizarDetalhesAtividade(fase) {
     const listaUl = document.getElementById('lista-atividades-fase');
     listaUl.innerHTML = ''; // Limpa a lista anterior
 
     document.getElementById('detalhe-atividade').textContent = fase.nome;
     
-    // Cria um item de lista (<li>) para cada atividade detalhada
     fase.atividades_detalhadas.forEach(atividade => {
         const li = document.createElement('li');
         li.textContent = atividade;
@@ -291,7 +310,6 @@ function alternarSimulacao() {
 }
 
 function mudarVelocidade(sliderValue) {
-    // Usa o mapeamento para obter o valor real da velocidade (ex: slider 1 = 0.25x)
     velocidadeSimulacao = mapeamentoVelocidade[sliderValue];
     document.getElementById('velocidade-atual').textContent = `Velocidade: ${velocidadeSimulacao}x`;
     if (simulacaoInterval) {
